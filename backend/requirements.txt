@@ -1,0 +1,13 @@
+beautifulsoup4==4.13.3
+boto3==1.36.25
+duckduckgo-search==7.4.4
+fastapi==0.115.8
+langchain_aws==0.2.13
+langchain_community==0.3.18
+loguru==0.7.3
+playwright==1.50.0
+pydantic==2.10.6
+pydantic-settings==2.8.0
+python-dotenv==1.0.1
+tiktoken==0.9.0
+uvicorn==0.34.0
