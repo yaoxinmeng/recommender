@@ -18,7 +18,7 @@ class OpeningHours(BaseModel):
 
 class ImageData(BaseModel):
     """
-    Relevant data of and image.
+    Relevant data of an image.
     """
     url: str = Field(description="URL of the image")
     caption: str = Field(description="Caption of the image")
@@ -38,11 +38,11 @@ class LocationData(BaseModel):
     :param dict[str, ImageData] images: Dictionary of images saved as a mapping of {<image_name>: <ImageData>}
     :param list[str] citation: List of sources used to generate this data
     """
-    name: str = Field(description="Name of the location")
-    address: str = Field(description="Physical address of the location or event")
+    name: str
+    address: str
     opening_hours: OpeningHours
-    description: str = Field(description="A 350-400 character description of the location")
-    offerings: dict[str, str] = Field(description="List of offerings saved as a mapping of {<offering>: <price>}")
-    contact: str = Field(description="Contact number with the format '+65-1234-5678'", default="")
-    images: dict[str, ImageData] = Field(description="Dictionary of images saved as a mapping of {<image_name>: <ImageData>}")
-    citation: list[str] = Field(description="List of sources used to generate this data", default="")
+    description: str
+    offerings: dict[str, str]
+    contact: str
+    images: dict[str, ImageData]
+    citation: list[str]

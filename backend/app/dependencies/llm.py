@@ -12,7 +12,7 @@ class BedrockAsyncCallbackHandler(AsyncCallbackHandler):
         if reason == "GUARDRAIL_INTERVENED":
             logger.warning(f"Guardrails: {kwargs}")
 
-class Bedrock(BedrockLLM):
+class LLM(BedrockLLM):
     """
     A wrapper built around LangChain's BedrockLLM class that allows us to customise some of the builtin methods.
     """
@@ -23,12 +23,12 @@ class Bedrock(BedrockLLM):
                 model_id=settings.BEDROCK_LLM_ID,
                 guardrails={"id": settings.BEDROCK_GUARDRAIL_ID, "version": settings.BEDROCK_GUARDRAIL_VERSION, "trace": True},
                 callbacks=[BedrockAsyncCallbackHandler()],
-                beta_use_converse_api=True,
+                max_tokens=4096
             )
         else:
             super().__init__(
                 model_id=settings.BEDROCK_LLM_ID,
-                beta_use_converse_api=True,
+                max_tokens=4096
             )
 
     def invoke(self, *args, **kwargs) -> str:
@@ -39,4 +39,4 @@ class Bedrock(BedrockLLM):
         logger.trace(f"Generated output:\n{output}")
         return output
     
-llm = Bedrock()
+llm = LLM()

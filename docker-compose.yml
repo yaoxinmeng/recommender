@@ -3,12 +3,13 @@ services:
   backend:
     build: ./backend
     environment:
-      - AWS_DEFAULT_REGION=ap-southeast-2
+      - AWS_DEFAULT_REGION=us-east-1
       - AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY
       - AWS_SESSION_TOKEN
       - ENV=debug
-      - BEDROCK_LLM_ID=mistral.mixtral-8x7b-instruct-v0:1
+      - BEDROCK_LLM_ID=mistral.mistral-7b-instruct-v0:2
+      - BEDROCK_MULTIMODAL_ID=amazon.nova-lite-v1:0
       - BEDROCK_USE_GUARDRAIL=false
       - BEDROCK_GUARDRAIL_ID
       - BEDROCK_GUARDRAIL_VERSION
