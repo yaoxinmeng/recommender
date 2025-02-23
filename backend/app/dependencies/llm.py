@@ -1,7 +1,8 @@
-from langchain_aws import BedrockLLM, ChatBedrock
-from langchain_core.callbacks import AsyncCallbackHandler
+import time
 
 from loguru import logger
+from langchain_aws import BedrockLLM
+from langchain_core.callbacks import AsyncCallbackHandler
 
 from app.core.config import settings
 
@@ -11,6 +12,10 @@ class BedrockAsyncCallbackHandler(AsyncCallbackHandler):
         reason = kwargs.get("reason")
         if reason == "GUARDRAIL_INTERVENED":
             logger.warning(f"Guardrails: {kwargs}")
+
+
+RETRY_LIMIT = 10
+RETRY_DELAY = 2
 
 class LLM(BedrockLLM):
     """
@@ -35,8 +40,16 @@ class LLM(BedrockLLM):
         """
         Custom invoke method to generate debug logs based on environment settings.
         """
-        output = super().invoke(*args, **kwargs)
-        logger.trace(f"Generated output:\n{output}")
-        return output
+        for i in range(RETRY_LIMIT):
+            try:
+                output = super().invoke(*args, **kwargs)
+                logger.trace(f"Generated output:\n{output}")
+                return output
+            except Exception as e:  
+                logger.warning(f"Failed to generate output: {e}")
+                time.sleep(RETRY_DELAY * (i + 1))
+
+        logger.error(f"Failed to generate output after {RETRY_LIMIT} retries")
+        return ""
     
 llm = LLM()

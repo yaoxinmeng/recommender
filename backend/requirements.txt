@@ -4,6 +4,7 @@ duckduckgo-search==7.4.4
 fastapi==0.115.8
 langchain_aws==0.2.13
 langchain_community==0.3.18
+langgraph==0.2.74
 loguru==0.7.3
 playwright==1.50.0
 pydantic==2.10.6
