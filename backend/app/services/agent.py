@@ -1,3 +1,5 @@
+import json
+
 from loguru import logger
 
 from app.types.schema import LocationData, OpeningHours, ImageData
@@ -6,31 +8,29 @@ from app.services.tools.search import search_duckduckgo
 from app.services.tools.scraper import scrape
 from app.services.tools.structured_output import get_preliminary_location, get_candidate_locations, get_search_queries
 from app.services.tools.image_caption import generate_caption
-from app.services.utils import intialise_preliminary_locations
+from app.services.utils import initialise_preliminary_locations
 
 def venue_agent(query: str, n_results: int) -> list[LocationData]:
     # craft a list of candidate locations
     sg_query = query + " Singapore"
-    search_results = search_duckduckgo(sg_query)
+    urls = search_duckduckgo(sg_query)
     locations: list[str] = []
-    for result in search_results:
+    for result in urls:
         content = scrape(result)
         candidate_locations = get_candidate_locations(content, sg_query, n_results)
         locations.extend([l for l in candidate_locations if l])
 
-        # remove duplicate locations, if any
-        locations = list(set(locations))
         logger.trace(locations)
         if len(locations) >= n_results:
             break
 
     # create an empty PreliminaryLocationData object for each location
-    preliminary_locations = intialise_preliminary_locations(locations)
+    preliminary_locations = initialise_preliminary_locations(locations[:n_results])
 
     # attempt to fill in the details of each preliminary location
     results: list[LocationData] = []
     for i, location in enumerate(preliminary_locations):
-        citations = []
+        citations = [*urls]
         for _ in range(2):  # iterate up to n times to refine the information of each candidate location
             search_queries = get_search_queries(location.name + " Singapore", location)
             logger.trace(search_queries)
@@ -39,49 +39,50 @@ def venue_agent(query: str, n_results: int) -> list[LocationData]:
 
             # extract data from first search query
             query = search_queries[0]
-            search_results = search_duckduckgo(query)
-            logger.trace(search_results)
-            for res in search_results:
-                # check if URL has been visited already
-                if res in citations:
-                    continue
-                citations.append(res)
-                content = scrape(res)
+            urls = search_duckduckgo(query)
+            logger.trace(urls)
+            urls = [s for s in urls if s not in citations]  # check if URL has been visited already
+            for url in urls[:2]:  # limit search to top 2 each time
+                logger.info(f"Attempting to retrieve relevant information from {url}")
+                content = scrape(url)
                 logger.trace(content)
 
                 # attempt to parse into PreliminaryLocationData and update location
                 location_data = get_preliminary_location(content, location.name)
                 logger.trace(location_data)
-                preliminary_locations[i] = _update_location_data(preliminary_locations[i], location_data)
+                updated, preliminary_locations[i] = _update_location_data(preliminary_locations[i], location_data)
+                if updated:
+                    citations.append(url)
 
-        # TODO transform into LocationData schema
         transformed_data = _preliminary_to_final_location_data(preliminary_locations[i], citations)
         logger.trace(transformed_data)
         results.append(transformed_data)
 
-    # TODO generate captions for each image
-    for r in results:
+    # generate captions for each image
+    for i, r in enumerate(results):
         for name in r.images:
-            generate_caption(r.images[name])
+            caption = generate_caption(r.images[name])
+            results[i].images[name].caption = caption
 
-    # TODO transform into LocationData schema
-
-    return []
+    return results
 
 
-def _update_location_data(old_data: PreliminaryLocationData, new_data: PreliminaryLocationData | None) -> PreliminaryLocationData:
+def _update_location_data(old_data: PreliminaryLocationData, new_data: PreliminaryLocationData | None) -> tuple[bool, PreliminaryLocationData]:
     """
     Update the old data with newly scraped data. We make the assumption that the new data is more relevant to the old data,
     but this can be formally implemented in the future with a LLM call.
+
+    Returns a tuple containing a flag of whether any updates were made, and the updated model.
     """
     if not new_data:
-        return old_data
+        return False, old_data
     
     # convert to dictionary for easier iteration
     new_dict = new_data.model_dump()
     old_dict = old_data.model_dump()
+    old_dict_json = json.dumps(old_dict)
 
-    # TODO implement logic for updating fields individually
+    # update fields individually
     for key in new_dict:
         if key == "opening_hours":
             for day in new_dict[key]:
@@ -94,7 +95,11 @@ def _update_location_data(old_data: PreliminaryLocationData, new_data: Prelimina
         else:
             if new_dict[key]:
                 old_dict[key] = new_dict[key]
-    return PreliminaryLocationData.model_validate(old_dict)
+
+    # check if any updates were made
+    changes = old_dict_json != json.dumps(old_dict)
+
+    return changes, PreliminaryLocationData.model_validate(old_dict)
 
 
 def _preliminary_to_final_location_data(preliminary: PreliminaryLocationData, citations: list[str]) -> LocationData:

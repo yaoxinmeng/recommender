@@ -5,6 +5,6 @@ from app.types.schema import LocationData
 
 router = APIRouter()
 
-@router.post(path="/", response_model=list[LocationData])
+@router.post(path="/venues", response_model=list[LocationData])
 def search_venues(body: SearchPayload) -> list[LocationData]:
     return venue_agent(body.query, body.num_results)

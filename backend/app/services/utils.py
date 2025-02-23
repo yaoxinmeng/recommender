@@ -1,6 +1,6 @@
 from app.types.model_outputs import PreliminaryLocationData, PreliminaryOpeningHours, TimeInterval
 
-def intialise_preliminary_locations(locations: list[str]) -> list[PreliminaryLocationData]:
+def initialise_preliminary_locations(locations: list[str]) -> list[PreliminaryLocationData]:
     return [PreliminaryLocationData(
         name=location,
         address="",

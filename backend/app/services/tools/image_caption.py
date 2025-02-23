@@ -4,6 +4,7 @@ from loguru import logger
 import base64
 
 from app.dependencies.multimodal_llm import multimodal_llm
+from app.services.prompts import IMAGE_CAPTION_PROMPT
 from app.types.schema import ImageData
 
 def generate_caption(image_name: str, image_data: ImageData) -> str:
@@ -25,7 +26,7 @@ def generate_caption(image_name: str, image_data: ImageData) -> str:
     # TODO: Implement the prompt template for this function
     caption = multimodal_llm.invoke(HumanMessage(
         content=[
-            {"text": "Caption this image in less than 70 words"},
+            {"text": IMAGE_CAPTION_PROMPT},
             {"image": {"format": image_format, "source": {"bytes": image_base64}}},
         ],
     ))

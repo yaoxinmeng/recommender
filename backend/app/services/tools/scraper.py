@@ -18,7 +18,8 @@ def scrape(url: str) -> str:
     doc = Document(page_content=content, metadata={"source": url})
     bs_transformer = BeautifulSoupTransformer()
     docs_transformed = bs_transformer.transform_documents(
-        [doc], tags_to_extract=["span"]
+        [doc], tags_to_extract=["p", "img", "li", "span"],
+        unwanted_tags=("nav", "script", "style")
     )
 
     # return only the first 10k tokens of the page content

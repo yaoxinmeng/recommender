@@ -28,7 +28,7 @@ def get_preliminary_location(text: str, location_name: str) -> PreliminaryLocati
 def get_candidate_locations(text: str, query: str, n_results: int) -> list[str]:
     messages = [
         SystemMessage(STRUCTURED_RESPONSE_SYSTEM_PROMPT.format(
-            json_schema='["<location_name>"]'
+            json_schema='[\n"<location_or_event_name>"\n]'
         )),
         HumanMessage(CANDIDATE_LOCATIONS_PROMPT.format(
             query=query, 
@@ -44,7 +44,7 @@ def get_candidate_locations(text: str, query: str, n_results: int) -> list[str]:
 def get_search_queries(query: str, location: PreliminaryLocationData):
     messages = [
         SystemMessage(STRUCTURED_RESPONSE_SYSTEM_PROMPT.format(
-            json_schema='["<search_query>"]'
+            json_schema='[\n"<search_query>"\n]'
         )),
         HumanMessage(SEARCH_QUERY_PROMPT.format(
             query=query,

@@ -23,18 +23,21 @@ class LLM(BedrockLLM):
     """
     def __init__(self):
         # Define LLM API
+        kwargs = {
+            "model_id": settings.BEDROCK_LLM_ID,
+            "max_tokens": 1024,
+            "model_kwargs": {
+                "temperature": 0.2
+            }
+        }
         if settings.BEDROCK_USE_GUARDRAIL:
             super().__init__(
-                model_id=settings.BEDROCK_LLM_ID,
                 guardrails={"id": settings.BEDROCK_GUARDRAIL_ID, "version": settings.BEDROCK_GUARDRAIL_VERSION, "trace": True},
                 callbacks=[BedrockAsyncCallbackHandler()],
-                max_tokens=4096
+                **kwargs
             )
         else:
-            super().__init__(
-                model_id=settings.BEDROCK_LLM_ID,
-                max_tokens=4096
-            )
+            super().__init__(**kwargs)
 
     def invoke(self, *args, **kwargs) -> str:
         """
