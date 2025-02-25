@@ -39,3 +39,6 @@ The internal flow of the API can be broken down into 3 main stages:
       D-- Yes -->E(Finish);
       D-- No -->B
 ```
+
+## Challenges
+Some of the challenges encountered along the way are documented [here](docs/challenges.md)

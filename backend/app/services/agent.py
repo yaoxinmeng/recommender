@@ -6,7 +6,7 @@ from app.types.schema import LocationData, OpeningHours, ImageData
 from app.types.model_outputs import PreliminaryLocationData, TimeInterval, Offering, PreliminaryImageData
 from app.services.tools.search import search_duckduckgo
 from app.services.tools.scraper import scrape
-from app.services.tools.structured_output import get_preliminary_location, get_candidate_locations, get_search_queries
+from app.services.tools.structured_output import get_preliminary_location, get_candidate_locations, get_search_queries, update_location_data
 from app.services.tools.image_caption import generate_caption_hashtags
 from app.services.utils import initialise_preliminary_locations
 
@@ -34,7 +34,7 @@ def venue_agent(query: str, n_results: int, n_iterations: int) -> list[LocationD
     results: list[LocationData] = []
     for i, location in enumerate(preliminary_locations):
         citations = [*main_urls]
-        for _ in range(n_iterations):  # iterate up to n times to refine the information of each candidate location
+        for iter_count in range(n_iterations):  # iterate up to n times to refine the information of each candidate location
             search_queries = get_search_queries(location.name + " Singapore", preliminary_locations[i])
             logger.trace(f"Search queries: {search_queries}")
             if not search_queries:
@@ -55,9 +55,13 @@ def venue_agent(query: str, n_results: int, n_iterations: int) -> list[LocationD
             # attempt to parse into PreliminaryLocationData and update location
             location_data = get_preliminary_location(content, location.name)
             logger.trace(location_data.model_dump() if location_data else "No location data extracted")
-            updated, preliminary_locations[i] = _update_location_data(preliminary_locations[i], location_data)
-            if updated:
+            if iter_count == 0:     # save 1 LLM call if it's the first iteration
+                preliminary_locations[i] = location_data
                 citations.append(url)
+            else:
+                updated, preliminary_locations[i] = _update_location_data(preliminary_locations[i], location_data)
+                if updated:
+                    citations.append(url)
 
         transformed_data = _preliminary_to_final_location_data(preliminary_locations[i], citations)
         logger.trace(transformed_data.model_dump())
@@ -76,37 +80,41 @@ def venue_agent(query: str, n_results: int, n_iterations: int) -> list[LocationD
 
 def _update_location_data(old_data: PreliminaryLocationData, new_data: PreliminaryLocationData | None) -> tuple[bool, PreliminaryLocationData]:
     """
-    Update the old data with newly scraped data. We make the assumption that the new data is more relevant to the old data,
-    but this can be formally implemented in the future with a LLM call.
+    Update the old data with newly scraped data. We make the assumption that the old data fields that were already filled are more
+    relevant to the new data, since these are generated with the appropriate search queries. 
 
     Returns a tuple containing a flag of whether any updates were made, and the updated model.
     """
     if not new_data:
         return False, old_data
     
-    # convert to dictionary for easier iteration
-    new_dict = new_data.model_dump()
-    old_dict = old_data.model_dump()
-    old_dict_json = json.dumps(old_dict)
+    old_dict_json = old_data.model_dump_json()
+    combined_data = update_location_data(old_data, new_data)
+    changes = old_dict_json != combined_data.model_dump_json()
+    return changes, combined_data
+    
+    # # convert to dictionary for easier iteration
+    # new_dict = new_data.model_dump()
+    # old_dict = old_data.model_dump()
 
-    # update fields individually
-    for key in new_dict:
-        if key == "opening_hours":
-            for day in new_dict[key]:
-                if new_dict[key][day]["start"]:
-                    old_dict[key][day]["start"] = new_dict[key][day]["start"]
-                if new_dict[key][day]["end"]:
-                    old_dict[key][day]["end"] = new_dict[key][day]["end"]
-        elif key == "offerings" or key == "images":
-            old_dict[key].extend(new_dict[key])
-        else:
-            if new_dict[key]:
-                old_dict[key] = new_dict[key]
+    # # update fields individually
+    # for key in new_dict:
+    #     if key == "opening_hours":
+    #         for day in new_dict[key]:
+    #             if new_dict[key][day]["start"]:
+    #                 old_dict[key][day]["start"] = new_dict[key][day]["start"]
+    #             if new_dict[key][day]["end"]:
+    #                 old_dict[key][day]["end"] = new_dict[key][day]["end"]
+    #     elif key == "offerings" or key == "images":
+    #         old_dict[key].extend(new_dict[key])
+    #     else:
+    #         if new_dict[key]:
+    #             old_dict[key] = new_dict[key]
 
-    # check if any updates were made
-    changes = old_dict_json != json.dumps(old_dict)
+    # # check if any updates were made
+    # changes = old_dict_json != json.dumps(old_dict)
 
-    return changes, PreliminaryLocationData.model_validate(old_dict)
+    # return changes, PreliminaryLocationData.model_validate(old_dict)
 
 
 def _preliminary_to_final_location_data(preliminary: PreliminaryLocationData, citations: list[str]) -> LocationData:

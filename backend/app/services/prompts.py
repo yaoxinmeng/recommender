@@ -1,5 +1,8 @@
+################################################
+# HUMAN PROMPTS
+################################################
 CANDIDATE_LOCATIONS_PROMPT = """
-Extract locations or events that are relevant to "{query}" from the following document. If no relevant locations or events are found, return an empty list.
+Extract locations or events that are relevant to "{query}" from the following document. Return the names of these locations or events as a list of string. If nothing relevant is found, return an empty list.
 
 {text}
 
@@ -13,17 +16,14 @@ You are an expert researcher who has been tasked to find detailed information on
 Currently you have gathered the following information:
 {information}
 
-The information that is required is in the following format: 
-{schema}
-
-If there is any missing information, return ONLY a list of Google search queries. DO NOT attempt to fill in the missing information yourself.
+Return a list of Google search queries that you think will help to fill the missing information. DO NOT attempt to fill in the missing information yourself. Return the search queries as list of string.
 
 Search queries:
 ```json
 """.strip(" \n")
 
 
-STRUCTURED_OUTPUT_PROMPT = """
+PRELIMINARY_INFORMATION_PROMPT = """
 Extract only information relevant to "{name}" from this document:
 
 {text}
@@ -32,25 +32,22 @@ Extract only information relevant to "{name}" from this document:
 """.strip(" \n")
 
 
-STRUCTURED_OUTPUT_SYSTEM_PROMPT = """
-Your task is to precisely extract information from the text provided, and format it according to the given JSON schema delimited with triple backticks. Only include the JSON output in your response. Avoid including any other statements in the response.
+COMPARE_INFORMATION_PROMPT = """
+Combine the following documents into a single new document by retaining the most relevant fields from each document.
 
+Document 1:
+{document_1}
+
+Document 2:
+{document_2}
+
+New Document:
 ```json
-{json_schema}
-```
 """.strip(" \n")
-
-STRUCTURED_RESPONSE_SYSTEM_PROMPT = """
-Your task is to execute the instructions specified, and format your response according to the given JSON schema delimited with triple backticks. Only include the JSON output in your response. Avoid including any other statements in the response.
-
-```json
-{json_schema}
-```
-"""
 
 
 IMAGE_CAPTION_PROMPT = """
-Generate captions and hashtags for this image. For the caption, use the following examples to guide your tone. Keep the caption to less than 70 words. 
+Generate captions and hashtags for this image. For the caption, use the following examples to guide your tone. Keep the caption to less than 70 words. The hashtags should be generated with reference to the caption.
 
 Example 1: An iconic staple of local cuisine, this dish is made with mud crab drenched in chilli sauce, with fried bread buns on the side to sop the leftovers.
 
@@ -64,6 +61,27 @@ Example 5: The Civic district area holds the WW2 memorial for civilians. It is h
 
 Example 6: The heartbeat of Singapore, this bustling river is where everything started. Formerly lined with warehouses trading along the Singapore River, the only businesses you'll find here today are restaurants, clubs and bars.
 
-Caption:
+Caption and Hashtags:
 ```json
 """.strip(" \n")
+
+
+################################################
+# SYSTEM PROMPTS
+################################################
+STRUCTURED_OUTPUT_SYSTEM_PROMPT = """
+Your task is to precisely extract information from the text provided, and format it according to the given JSON schema delimited with triple backticks. Only include the JSON output in your response. Avoid including any other statements in the response.
+
+```json
+{json_schema}
+```
+""".strip(" \n")
+
+
+STRUCTURED_RESPONSE_SYSTEM_PROMPT = """
+Your task is to execute the instructions specified, and format your response according to the given JSON schema delimited with triple backticks. Only include the JSON output in your response. Avoid including any other statements in the response.
+
+```json
+{json_schema}
+```
+"""

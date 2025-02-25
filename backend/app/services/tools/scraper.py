@@ -48,16 +48,27 @@ def _parse_html(content: str, text_tags: list[str] = ["p", "h1", "h2", "h3", "h4
     :param list[str] image_tags: The list of tags that will be treated as images
     """
     soup = bs4.BeautifulSoup(content, "html.parser")
-    html_content = ""
+    html_content = []
     for element in soup.find_all():
         if element.name in image_tags:
             element = _recursively_remove_attrs(element, ["src"])
-            html_content += str(element)
+            html_content.append(str(element))
             element.decompose()
         elif element.name in text_tags:
-            html_content += element.get_text()
+            if element.name == "li":
+                html_content.append("- " + element.get_text())
+            elif element.name == "h1":
+                html_content.append("# " + element.get_text())
+            elif element.name == "h2":
+                html_content.append("## " + element.get_text())
+            elif element.name == "h3":
+                html_content.append("### " + element.get_text())
+            elif element.name == "h4":
+                html_content.append("#### " + element.get_text())
+            else:
+                html_content.append(element.get_text())
             element.decompose()
-    return html_content
+    return "\n".join(html_content)
 
 
 def _recursively_remove_attrs(tag: _OneElement, attrs: list[str]) -> _OneElement:
