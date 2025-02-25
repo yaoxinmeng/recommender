@@ -9,7 +9,7 @@ def parse_string_list(input: str) -> list[str]:
     """
     Parse the input string as a list of string.
     """
-    queries = _parse_json_in_backticks("```" + input)
+    queries = _parse_json_in_backticks(input)
     # if unable to retrieve items in backticks
     if not queries or type(queries) != list:
         logger.warning("No valid JSON object found within backticks, looking for JSON object outside of backticks")
@@ -33,7 +33,7 @@ def parse_preliminary_location(input: str) -> PreliminaryLocationData | None:
     :return: The formatted preliminary location data.
     """
     # Parse as json
-    location = _parse_json_in_backticks("```" + input)
+    location = _parse_json_in_backticks(input)
     if not location or type(location) != dict:
         location = _parse_json_dict(input)
     logger.trace(location)
@@ -145,7 +145,7 @@ def parse_image_details(input: str) -> tuple[str, list[str]]:
     :return tuple[str, list[str]]: The caption and list of hashtags extracted.
     """
     # Parse as json
-    details = _parse_json_in_backticks("```" + input)
+    details = _parse_json_in_backticks(input)
     if not details or type(details) != dict:
         details = _parse_json_dict(input)
     logger.trace(details)
@@ -173,7 +173,11 @@ def _parse_json_in_backticks(string: str) -> Any | None:
     :params str string: The input string
     :returns Any | None: The parsed JSON object. If no valid objects are found, return None.
     """
-    match = re.search(r"\`\`\`(.+?)\`\`\`", string, re.DOTALL)
+    # attempt to parse string with both opening and closing backticks first
+    match = re.search(r"\`\`\`json(.+?)\`\`\`", string, re.DOTALL)
+    if not match:
+        # attempt to parse string with only the closing backticks
+        match = re.search(r"(.+)\`\`\`", string, re.DOTALL)
     if not match:
         return None
     try:
