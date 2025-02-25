@@ -25,8 +25,17 @@ The internal flow of the API can be broken down into 3 main stages:
       A(Web search for candidate locations)-->B([List of search results]);
       B-->C(Extract relevant locations);
       C-->D{Enough locations?};
-      D--Yes-->E(Finish);
-      D--No-->B
+      D-- Yes -->E(Finish);
+      D-- No -->B
 ```
 
 ### 2. Retrieving relevant details of each candidate location
+
+```mermaid
+  graph TD;
+      A(Craft search queries based on missing information)-->B([List of search results]);
+      B-->C(Extract relevant locations);
+      C-->D{Enough locations?};
+      D-- Yes -->E(Finish);
+      D-- No -->B
+```

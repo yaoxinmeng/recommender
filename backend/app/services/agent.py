@@ -13,9 +13,9 @@ from app.services.utils import initialise_preliminary_locations
 def venue_agent(query: str, n_results: int) -> list[LocationData]:
     # craft a list of candidate locations
     sg_query = query + " Singapore"
-    urls = search_duckduckgo(sg_query)
+    main_urls = search_duckduckgo(sg_query)
     locations: list[str] = []
-    for result in urls:
+    for result in main_urls:
         content = scrape(result)
         candidate_locations = get_candidate_locations(content, sg_query, n_results)
         locations.extend([l for l in candidate_locations if l])
@@ -30,7 +30,7 @@ def venue_agent(query: str, n_results: int) -> list[LocationData]:
     # attempt to fill in the details of each preliminary location
     results: list[LocationData] = []
     for i, location in enumerate(preliminary_locations):
-        citations = [*urls]
+        citations = [*main_urls]
         for _ in range(2):  # iterate up to n times to refine the information of each candidate location
             search_queries = get_search_queries(location.name + " Singapore", location)
             logger.trace(search_queries)

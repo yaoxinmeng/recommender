@@ -1,29 +1,43 @@
 from loguru import logger
+import bs4
 from playwright.sync_api import sync_playwright
 from langchain_community.document_transformers import BeautifulSoupTransformer
 from langchain_core.documents import Document
 
 
-def scrape(url: str) -> str:
+def scrape(url: str, tags: list[str] = ["p", "h1", "h2", "h3", "h4", "img"]) -> str:
     """
-    Call to scrape the contents of a web page.
+    Call to scrape the contents of a web page. Retrieves only elements that match the provided tags.
 
     :param str url: The URL of the web page to scrape.
+    :param list[str] tags: The list of relevant tags to retrieve.
     :return: The content of the web page.
     """
     # scrape using Playwright
     content = _playwright_scrape(url)
 
     # extract relevent content using BeautifulSoup
-    doc = Document(page_content=content, metadata={"source": url})
-    bs_transformer = BeautifulSoupTransformer()
-    docs_transformed = bs_transformer.transform_documents(
-        [doc], tags_to_extract=["p", "img", "li", "span"],
-        unwanted_tags=("nav", "script", "style")
-    )
+    # doc = Document(page_content=content, metadata={"source": url})
+    # bs_transformer = BeautifulSoupTransformer()
+    # docs_transformed = bs_transformer.transform_documents(
+    #     [doc], tags_to_extract=["p", "img", "li", "span"],
+    #     unwanted_tags=("nav", "script", "style")
+    # )
+
+    # extract relevent content using BeautifulSoup
+    # we retain it in markup since the positions of embedded images are important
+    soup = bs4.BeautifulSoup(content, "html.parser")
+    html_content = ""
+    KEEP_ATTRIBUTES = ["src"]
+    for element in soup.find_all():
+        if element.name in tags:
+            element.attrs = {key: value for key, value in element.attrs.items() if key in KEEP_ATTRIBUTES}
+            html_content += str(element.prettify())
+            element.decompose()
+    logger.trace(html_content)
 
     # return only the first 10k tokens of the page content
-    trunc_content = docs_transformed[0].page_content[:10000]
+    trunc_content = html_content[:10000]
     return trunc_content
 
 
