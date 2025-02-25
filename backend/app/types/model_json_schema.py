@@ -2,21 +2,18 @@ PRELIMINARY_LOCATION_JSON_SCHEMA = """
 {
     "name": "<name of location>",
     "address": "<address of the location>",
-    "description": "<description of the location>",
-    "contact": "<contact_number with the format '+65-1234-5678'>",
+    "description": "<detailed description of the location>",
+    "contact": "<contact number with the format '+65-1234-5678'>",
     "offerings": [
         {
-            "name": "<offering_name>",
-            "price": "<offering_price>"
+            "name": "<name of product or service>",
+            "price": "<price of product or service>"
         }
     ],
     "images": [
         {
             "name": "<image_name>",
-            "url": "<image_url>",
-            "hashtags": [
-                "<image_hashtag>"
-            ]
+            "url": "<image_url>"
         }
     ],
     "opening_hours": {
@@ -49,5 +46,15 @@ PRELIMINARY_LOCATION_JSON_SCHEMA = """
             "end": "<end_time formatted as HH:MM>"
         }
     }
+}
+""".strip(" \n")
+
+
+IMAGE_DETAILS_JSON_SCHEMA = """
+{
+    "caption": "image_caption",
+    "hashtags": [
+        "<image_hashtag>"
+    ]
 }
 """.strip(" \n")

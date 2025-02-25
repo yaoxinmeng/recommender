@@ -25,26 +25,27 @@ def get_preliminary_location(text: str, location_name: str) -> PreliminaryLocati
     return parse_preliminary_location(content)
 
 
-def get_candidate_locations(text: str, query: str, n_results: int) -> list[str]:
+def get_candidate_locations(text: str, query: str) -> list[str]:
     messages = [
         SystemMessage(STRUCTURED_RESPONSE_SYSTEM_PROMPT.format(
             json_schema='[\n"<location_or_event_name>"\n]'
         )),
         HumanMessage(CANDIDATE_LOCATIONS_PROMPT.format(
             query=query, 
-            # n_results=n_results, 
             text=text
         ))
     ]
     logger.trace(messages)
     output = llm.invoke(messages)
-    return parse_string_list(output)
+    locations = parse_string_list(output)
+    refined_locations = list(filter(lambda x: not x.startswith("<"), locations))
+    return refined_locations
     
 
 def get_search_queries(query: str, location: PreliminaryLocationData):
     messages = [
         SystemMessage(STRUCTURED_RESPONSE_SYSTEM_PROMPT.format(
-            json_schema='[\n"<search_query>"\n]'
+            json_schema='{[\n"<search_query>"\n]}'
         )),
         HumanMessage(SEARCH_QUERY_PROMPT.format(
             query=query,
@@ -54,4 +55,6 @@ def get_search_queries(query: str, location: PreliminaryLocationData):
     ]
     logger.trace(messages)
     content = llm.invoke(messages)
-    return parse_string_list(content)
+    queries = parse_string_list(content)
+    refined_queries = list(filter(lambda x: not x.startswith("<"), queries))
+    return refined_queries

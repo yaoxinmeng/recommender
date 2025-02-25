@@ -7,17 +7,19 @@ from app.types.model_outputs import PreliminaryLocationData, TimeInterval, Offer
 from app.services.tools.search import search_duckduckgo
 from app.services.tools.scraper import scrape
 from app.services.tools.structured_output import get_preliminary_location, get_candidate_locations, get_search_queries
-from app.services.tools.image_caption import generate_caption
+from app.services.tools.image_caption import generate_caption_hashtags
 from app.services.utils import initialise_preliminary_locations
 
-def venue_agent(query: str, n_results: int) -> list[LocationData]:
+def venue_agent(query: str, n_results: int, n_iterations: int) -> list[LocationData]:
     # craft a list of candidate locations
+    logger.info(f"Searching for pages relevant to '{query}'")
     sg_query = query + " Singapore"
     main_urls = search_duckduckgo(sg_query)
     locations: list[str] = []
+    logger.info(f"Searching for information in these pages: {main_urls}")
     for result in main_urls:
         content = scrape(result)
-        candidate_locations = get_candidate_locations(content, sg_query, n_results)
+        candidate_locations = get_candidate_locations(content, sg_query)
         locations.extend([l for l in candidate_locations if l])
 
         logger.trace(locations)
@@ -28,41 +30,46 @@ def venue_agent(query: str, n_results: int) -> list[LocationData]:
     preliminary_locations = initialise_preliminary_locations(locations[:n_results])
 
     # attempt to fill in the details of each preliminary location
+    logger.info(f"Search for more information regarding: {locations}")
     results: list[LocationData] = []
     for i, location in enumerate(preliminary_locations):
         citations = [*main_urls]
-        for _ in range(2):  # iterate up to n times to refine the information of each candidate location
-            search_queries = get_search_queries(location.name + " Singapore", location)
-            logger.trace(search_queries)
+        for _ in range(n_iterations):  # iterate up to n times to refine the information of each candidate location
+            search_queries = get_search_queries(location.name + " Singapore", preliminary_locations[i])
+            logger.trace(f"Search queries: {search_queries}")
             if not search_queries:
                 continue
 
             # extract data from first search query
             query = search_queries[0]
             urls = search_duckduckgo(query)
-            logger.trace(urls)
+            logger.trace(f"URLs: {urls}")
             urls = [s for s in urls if s not in citations]  # check if URL has been visited already
-            for url in urls[:2]:  # limit search to top 2 each time
-                logger.info(f"Attempting to retrieve relevant information from {url}")
-                content = scrape(url)
-                logger.trace(content)
+            if not urls:
+                continue
 
-                # attempt to parse into PreliminaryLocationData and update location
-                location_data = get_preliminary_location(content, location.name)
-                logger.trace(location_data)
-                updated, preliminary_locations[i] = _update_location_data(preliminary_locations[i], location_data)
-                if updated:
-                    citations.append(url)
+            url = urls[0]  # limit search to top unvisited URL each time
+            logger.info(f"Attempting to retrieve relevant information from {url}")
+            content = scrape(url)
+
+            # attempt to parse into PreliminaryLocationData and update location
+            location_data = get_preliminary_location(content, location.name)
+            logger.trace(location_data.model_dump() if location_data else "No location data extracted")
+            updated, preliminary_locations[i] = _update_location_data(preliminary_locations[i], location_data)
+            if updated:
+                citations.append(url)
 
         transformed_data = _preliminary_to_final_location_data(preliminary_locations[i], citations)
-        logger.trace(transformed_data)
+        logger.trace(transformed_data.model_dump())
         results.append(transformed_data)
 
-    # generate captions for each image
+    logger.debug(f"Pre-captioned data: {[r.model_dump() for r in results]}")
+    # generate/refine captions for each image
     for i, r in enumerate(results):
         for name in r.images:
-            caption = generate_caption(r.images[name])
+            caption, hashtags = generate_caption_hashtags(r.images[name])
             results[i].images[name].caption = caption
+            results[i].images[name].hashtags = hashtags
 
     return results
 
@@ -115,13 +122,18 @@ def _preliminary_to_final_location_data(preliminary: PreliminaryLocationData, ci
     
     def format_images(images: list[PreliminaryImageData]) -> dict[str, ImageData]:
         formatted = {}
+        urls = []
         for i in images:
             if not i.name or not i.url:
                 continue
+            # remove duplicate images 
+            if i.url in urls:
+                continue
+            urls.append(i.url)
             formatted[i.name] = ImageData(
                 caption="",
                 url=i.url,
-                hashtags=i.hashtags
+                hashtags=[]
             )
         return formatted
 

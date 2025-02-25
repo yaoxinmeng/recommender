@@ -7,4 +7,4 @@ router = APIRouter()
 
 @router.post(path="/venues", response_model=list[LocationData])
 def search_venues(body: SearchPayload) -> list[LocationData]:
-    return venue_agent(body.query, body.num_results)
+    return venue_agent(body.query, body.num_results, body.num_iterations)

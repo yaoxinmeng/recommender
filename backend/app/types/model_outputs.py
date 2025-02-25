@@ -3,7 +3,6 @@ from pydantic import BaseModel, Field
 class PreliminaryImageData(BaseModel):
     name: str = Field(description="Name of the image")
     url: str = Field(description="URL of the image")
-    hashtags: list[str] = Field(description="List of hashtags to be used when sharing the image")
 
 
 class TimeInterval(BaseModel):

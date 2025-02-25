@@ -2,15 +2,19 @@ from typing import Any
 import re
 import json
 from loguru import logger
-from app.types.model_outputs import PreliminaryOpeningHours, PreliminaryImageData, PreliminaryLocationData
+from app.types.model_outputs import PreliminaryLocationData
 
 
 def parse_string_list(input: str) -> list[str]:
     """
     Parse the input string as a list of string.
     """
-    queries = _parse_json(input)
+    queries = _parse_json_in_backticks("```" + input)
+    # if unable to retrieve items in backticks
     if not queries or type(queries) != list:
+        logger.warning("No valid JSON object found within backticks, looking for JSON object outside of backticks")
+        queries = _parse_json_list(input)
+    if not queries:
         return []
     
     results = []
@@ -29,7 +33,9 @@ def parse_preliminary_location(input: str) -> PreliminaryLocationData | None:
     :return: The formatted preliminary location data.
     """
     # Parse as json
-    location = _parse_json(input)
+    location = _parse_json_in_backticks("```" + input)
+    if not location or type(location) != dict:
+        location = _parse_json_dict(input)
     logger.trace(location)
     if not location:
         return None
@@ -99,24 +105,23 @@ def parse_preliminary_location(input: str) -> PreliminaryLocationData | None:
     if "offerings" in location:
         for o in location["offerings"]:
             try:
-                name = o.get("name", "")
+                o_name = o.get("name", "")
                 price = o.get("price", "")
-                assert name and price
-                assert type(name) == str and type(price) == str
-                offerings.append({"name": name, "price": price})
+                assert o_name and price
+                assert type(o_name) == str and type(price) == str
+                offerings.append({"name": o_name, "price": price})
             except: pass
     images = []
     if "images" in location:
         for i in location["images"]:
             try:
-                name = i.get("name", "")
+                i_name = i.get("name", "")
                 url = i.get("url", "")
-                hashtags = i.get("hashtags", [])
-                assert name and url
-                assert type(name) == str and type(url) == str and type(hashtags) == list
-                for h in hashtags:
-                    assert type(h) == str
-                images.append({"name": name, "url": url, "hashtags": hashtags})
+                assert i_name and url
+                assert type(i_name) == str and type(url) == str
+                if not _validate_url(url):
+                    continue
+                images.append({"name": i_name, "url": url})
             except: pass
 
     return PreliminaryLocationData(
@@ -130,9 +135,45 @@ def parse_preliminary_location(input: str) -> PreliminaryLocationData | None:
     )
 
 
-def _parse_json(string: str) -> Any | None:
+def parse_image_details(input: str) -> tuple[str, list[str]]:
+    """
+    Parse the image details from the raw input string. Returns a tuple containing the caption
+    and the list of hashtags.
+
+    :param str input: The input string to be parsed
+
+    :return tuple[str, list[str]]: The caption and list of hashtags extracted.
+    """
     # Parse as json
-    match = re.search(r"\`\`\`json(.+?)\`\`\`", string, re.DOTALL)
+    details = _parse_json_in_backticks("```" + input)
+    if not details or type(details) != dict:
+        details = _parse_json_dict(input)
+    logger.trace(details)
+    if not details:
+        return "", []
+    
+    caption = details.get("caption", "")
+    try:
+        assert type(caption) == str
+    except:
+        caption = ""
+    hashtags = details.get("hashtags", [])
+    try:
+        assert type(hashtags) == list[str]
+    except:
+        hashtags = []
+    
+    return caption, hashtags
+
+
+def _parse_json_in_backticks(string: str) -> Any | None:
+    """
+    Parse an input string and retrieve the JSON object enclosed in backticks.
+
+    :params str string: The input string
+    :returns Any | None: The parsed JSON object. If no valid objects are found, return None.
+    """
+    match = re.search(r"\`\`\`(.+?)\`\`\`", string, re.DOTALL)
     if not match:
         return None
     try:
@@ -147,3 +188,49 @@ def _parse_json(string: str) -> Any | None:
         except:
             logger.warning("Invalid JSON object found")
             return None
+        
+
+def _parse_json_list(string: str) -> list[Any] | None:
+    """
+    Parse an input string and retrieve the JSON list.
+
+    :params str string: The input string
+    :returns list[Any] | None: The parsed JSON list. If no valid objects are found, return None.
+    """
+    match = re.search(r"(\[.+\])", string, re.DOTALL)
+    if not match: 
+        return None
+    try:
+        raw_json = match.group(1).strip(" \n")
+        return json.loads(raw_json)
+    except:
+        logger.warning("Invalid JSON object found")
+        return None
+        
+
+def _parse_json_dict(string: str) -> dict[str, Any] | None:
+    """
+    Parse an input string and retrieve the JSON object.
+
+    :params str string: The input string
+    :returns dict[str, Any] | None: The parsed JSON object. If no valid objects are found, return None.
+    """
+    match = re.search(r"(\{.+\})", string, re.DOTALL)
+    if not match: 
+        return None
+    try:
+        raw_json = match.group(1).strip(" \n")
+        return json.loads(raw_json)
+    except:
+        logger.warning("Invalid JSON object found")
+        return None
+
+
+def _validate_url(string: str) -> bool:
+    """
+    Verify that the input string is a valid url
+    """
+    match = re.findall(r"https?:\/\/.*", string)
+    if not match:
+        return False
+    return True

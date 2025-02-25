@@ -1,11 +1,9 @@
 from loguru import logger
 import bs4
+from bs4._typing import _OneElement
 from playwright.sync_api import sync_playwright
-from langchain_community.document_transformers import BeautifulSoupTransformer
-from langchain_core.documents import Document
 
-
-def scrape(url: str, tags: list[str] = ["p", "h1", "h2", "h3", "h4", "img"]) -> str:
+def scrape(url: str) -> str:
     """
     Call to scrape the contents of a web page. Retrieves only elements that match the provided tags.
 
@@ -17,24 +15,8 @@ def scrape(url: str, tags: list[str] = ["p", "h1", "h2", "h3", "h4", "img"]) -> 
     content = _playwright_scrape(url)
 
     # extract relevent content using BeautifulSoup
-    # doc = Document(page_content=content, metadata={"source": url})
-    # bs_transformer = BeautifulSoupTransformer()
-    # docs_transformed = bs_transformer.transform_documents(
-    #     [doc], tags_to_extract=["p", "img", "li", "span"],
-    #     unwanted_tags=("nav", "script", "style")
-    # )
-
-    # extract relevent content using BeautifulSoup
-    # we retain it in markup since the positions of embedded images are important
-    soup = bs4.BeautifulSoup(content, "html.parser")
-    html_content = ""
-    KEEP_ATTRIBUTES = ["src"]
-    for element in soup.find_all():
-        if element.name in tags:
-            element.attrs = {key: value for key, value in element.attrs.items() if key in KEEP_ATTRIBUTES}
-            html_content += str(element.prettify())
-            element.decompose()
-    logger.trace(html_content)
+    # we retain images in markup since the positions of embedded images are important
+    html_content = _parse_html(content)
 
     # return only the first 10k tokens of the page content
     trunc_content = html_content[:10000]
@@ -54,3 +36,39 @@ def _playwright_scrape(url: str) -> str:
             content = ""
         browser.close()
     return content
+
+
+def _parse_html(content: str, text_tags: list[str] = ["p", "h1", "h2", "h3", "h4", "li"], image_tags: str = ["img"]) -> str:
+    """
+    Custom parser for html. Retrieves all text contents as text, but retains information
+    of embedded images in the page.
+
+    :param str content: The html content to be parsed
+    :param list[str] text_tags: The list of tags to retrieve text from
+    :param list[str] image_tags: The list of tags that will be treated as images
+    """
+    soup = bs4.BeautifulSoup(content, "html.parser")
+    html_content = ""
+    for element in soup.find_all():
+        if element.name in image_tags:
+            element = _recursively_remove_attrs(element, ["src"])
+            html_content += str(element)
+            element.decompose()
+        elif element.name in text_tags:
+            html_content += element.get_text()
+            element.decompose()
+    return html_content
+
+
+def _recursively_remove_attrs(tag: _OneElement, attrs: list[str]) -> _OneElement:
+    """
+    Removes all attributes other than the specified ones from the element and its children, 
+    and returns the modified tag
+
+    :param _OneElement tag: The element to be stripped
+    :param list[str] attrs: The list of attributes to keep
+    """
+    tag.attrs = {key: value for key, value in tag.attrs.items() if key in attrs}
+    for element in tag.find_all():
+        element.attrs = {key: value for key, value in element.attrs.items() if key in attrs}
+    return tag

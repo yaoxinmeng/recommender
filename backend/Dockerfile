@@ -1,6 +1,6 @@
 FROM python:3.10-slim
 
-RUN apt-get update && apt-get -y install gcc g++ git
+RUN apt-get update && apt-get -y install gcc g++ git ffmpeg
 
 WORKDIR /app
 
@@ -17,9 +17,5 @@ COPY app /app/app
 
 # set python path
 ENV PYTHONPATH=/app
-
-# change to non-root user
-# RUN useradd -ms /bin/bash myuser
-# USER myuser
 
 CMD uvicorn app.main:app --host 0.0.0.0 --port 8000 --lifespan on

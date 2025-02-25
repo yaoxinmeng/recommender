@@ -3,7 +3,7 @@ Extract locations or events that are relevant to "{query}" from the following do
 
 {text}
 
-JSON response:
+```json
 """.strip(" \n")
 
 
@@ -13,10 +13,13 @@ You are an expert researcher who has been tasked to find detailed information on
 Currently you have gathered the following information:
 {information}
 
-The information that is required is in the following format: {schema}
+The information that is required is in the following format: 
+{schema}
 
-If there is any missing information, return a list of Google search queries as a JSON list of string. DO NOT attempt to fill in the missing information yourself.
-If there is no more missing information, return an empty list.
+If there is any missing information, return ONLY a list of Google search queries. DO NOT attempt to fill in the missing information yourself.
+
+Search queries:
+```json
 """.strip(" \n")
 
 
@@ -25,12 +28,12 @@ Extract only information relevant to "{name}" from this document:
 
 {text}
 
-JSON response:
+```json
 """.strip(" \n")
 
 
 STRUCTURED_OUTPUT_SYSTEM_PROMPT = """
-Your task is to precisely extract information from the text provided, and format it according to the given JSON schema delimited with triple backticks. Only include the JSON output in your response. If a specific field has no available data, indicate this by writing `null` as the value for that field in the output JSON. Avoid including any other statements in the response.
+Your task is to precisely extract information from the text provided, and format it according to the given JSON schema delimited with triple backticks. Only include the JSON output in your response. Avoid including any other statements in the response.
 
 ```json
 {json_schema}
@@ -38,7 +41,7 @@ Your task is to precisely extract information from the text provided, and format
 """.strip(" \n")
 
 STRUCTURED_RESPONSE_SYSTEM_PROMPT = """
-Your task is to perform the task specified, and format your response according to the given JSON schema delimited with triple backticks. Only include the JSON output in your response.
+Your task is to execute the instructions specified, and format your response according to the given JSON schema delimited with triple backticks. Only include the JSON output in your response. Avoid including any other statements in the response.
 
 ```json
 {json_schema}
@@ -47,7 +50,7 @@ Your task is to perform the task specified, and format your response according t
 
 
 IMAGE_CAPTION_PROMPT = """
-Caption this image in less than 70 words. Use the following examples to guide your tone of caption.
+Generate captions and hashtags for this image. For the caption, use the following examples to guide your tone. Keep the caption to less than 70 words. 
 
 Example 1: An iconic staple of local cuisine, this dish is made with mud crab drenched in chilli sauce, with fried bread buns on the side to sop the leftovers.
 
@@ -61,5 +64,6 @@ Example 5: The Civic district area holds the WW2 memorial for civilians. It is h
 
 Example 6: The heartbeat of Singapore, this bustling river is where everything started. Formerly lined with warehouses trading along the Singapore River, the only businesses you'll find here today are restaurants, clubs and bars.
 
-Caption: 
+Caption:
+```json
 """.strip(" \n")

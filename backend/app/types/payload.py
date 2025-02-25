@@ -7,3 +7,4 @@ class SearchPayload(BaseModel):
     """
     query: str
     num_results: int = 10
+    num_iterations: int = 2
