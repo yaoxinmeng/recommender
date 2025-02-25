@@ -45,7 +45,7 @@ graph TD;
   C-->D([List of relevant URLs])
   D-->E(Scrape the contents of the first unvisited URL)
   E-->F(Extract relevant information from contents)
-  F-->G(Update previous information with newly extracted information)
+  F-->G(Update JSON object with newly extracted information)
   G-->N
   G-->H([Preliminary information of candidate location])
   H-->I((Finish))
