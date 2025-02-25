@@ -62,7 +62,8 @@ graph TD;
   S((Start))-->A(Download image)
   A-->B(Encode image as base 64)
   B-->C(Generate caption of image)
-
+  C-->D((Finish))
+  
   style C stroke:#0f0
 ```
 
