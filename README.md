@@ -38,9 +38,9 @@ In this step, we take the list of candidate locations generated in the previous 
 
 ```mermaid
 graph TD;
-  S((Start))-->N{Iterate n times}
-  N-->A([Blank JSON object of candidate location])
-  A-->B(Craft search queries based on missing information)
+  S((Start))-->A([Blank JSON object of candidate location])
+  A-->N{Iterate n times}
+  N-->B(Craft search queries based on missing information in JSON)
   B-->C(Web search based on first search query)
   C-->D([List of relevant URLs])
   D-->E(Scrape the contents of the first unvisited URL)
@@ -63,7 +63,7 @@ graph TD;
   A-->B(Encode image as base 64)
   B-->C(Generate caption of image)
   C-->D((Finish))
-  
+
   style C stroke:#0f0
 ```
 
