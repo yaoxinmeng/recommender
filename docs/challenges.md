@@ -1,6 +1,6 @@
 # Challenges
 ## Technical Challenges
-1. 
+1. Builtin API from LangChain does not work great out of the box - 
 
 ## Non-technical challenges
 1. Allowed LLM invocation rate is very low for personal AWS account. 

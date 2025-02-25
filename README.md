@@ -10,7 +10,7 @@ docker compose up -d
 The API endpoint is hosted on port `8000` by default, but this can be modified in "docker-compose.yml".
 
 ## Endpoints
-The SwaggerUI for the API is host at http://localhost:8000/docs by default. 
+The SwaggerUI for the API is hosted at http://localhost:8000/docs by default. 
 
 ## API internal flow
 The internal flow of the API can be broken down into 3 main stages:
@@ -19,25 +19,51 @@ The internal flow of the API can be broken down into 3 main stages:
 3. Captioning each image found
 
 ### 1. Identifying candidate locations
+In this step, we are attempting to find the most relevant locations/venues based on the user query by scraping the contents of the relevant page(s) and extracting the names of these locations using an LLM.
 
 ```mermaid
-  graph TD;
-      A(Web search for candidate locations)-->B([List of search results]);
-      B-->C(Extract relevant locations);
-      C-->D{Enough locations?};
-      D-- Yes -->E(Finish);
-      D-- No -->B
+graph TD;
+  S((Start))-->A(Web search based on user query)
+  A-->B([List of search results])
+  B-->C(Extract names of relevant locations)
+  C-->D{Enough candidate locations?}
+  D-- Yes -->E((Finish));
+  D-- No -->B
+
+  style B stroke:#0f0
 ```
 
 ### 2. Retrieving relevant details of each candidate location
+In this step, we take the list of candidate locations generated in the previous stage and attempt to iteratively furnish the missing details of each location. We attempt to fill all information other than the image captions and hashtags here. Below we outline the steps taken for one candidate location:
 
 ```mermaid
-  graph TD;
-      A(Craft search queries based on missing information)-->B([List of search results]);
-      B-->C(Extract relevant locations);
-      C-->D{Enough locations?};
-      D-- Yes -->E(Finish);
-      D-- No -->B
+graph TD;
+  S((Start))-->N{Iterate n times}
+  N-->A([Blank JSON object of candidate location])
+  A-->B(Craft search queries based on missing information)
+  B-->C(Web search based on first search query)
+  C-->D([List of relevant URLs])
+  D-->E(Scrape the contents of the first unvisited URL)
+  E-->F(Extract relevant information from contents)
+  F-->G(Update previous information with newly extracted information)
+  G-->N
+  G-->H([Preliminary information of candidate location])
+  H-->I((Finish))
+
+  class B, F, G llm;
+  style llm stroke:#0f0;
+```
+
+### 3. Captioning each image found
+In this step, we simply perform image captioning using an image-to-text LLM (Amazon Nova) for each image extracted above. Below, we outline the steps taken for a single image:
+
+```mermaid
+graph TD;
+  S((Start))-->A(Download image)
+  A-->B(Encode image as base 64)
+  B-->C(Generate caption of image)
+
+  style C stroke:#0f0
 ```
 
 ## Challenges
