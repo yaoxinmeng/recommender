@@ -50,8 +50,8 @@ graph TD;
   G-->H([Preliminary information of candidate location])
   H-->I((Finish))
 
-  class B, F, G llm;
-  style llm stroke:#0f0;
+  classDef llm stroke:#0f0;
+  class B,F,G llm;
 ```
 
 ### 3. Captioning each image found
