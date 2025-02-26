@@ -31,7 +31,7 @@ def _playwright_scrape(url: str) -> str:
         context = browser.new_context(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
         page = context.new_page()
         try:
-            page.goto(url)
+            page.goto(url, wait_until='networkidle', timeout=3000)  # we wait at most 3 seconds for a page to render
             content = page.content()
         except Exception as e:
             logger.error(f"Error loading page: {e}") 
@@ -54,7 +54,9 @@ def _parse_html(content: str, text_tags: list[str] = ["p", "h1", "h2", "h3", "h4
     for element in soup.find_all():
         if element.name in image_tags:
             element = _recursively_remove_attrs(element, ["src"])
-            html_content.append(str(element))
+            # check if image url is valid
+            if element.attrs.get("src", "").startswith("http"):
+                html_content.append(str(element))
             element.decompose()
         elif element.name in text_tags:
             if element.name == "li":
@@ -70,7 +72,7 @@ def _parse_html(content: str, text_tags: list[str] = ["p", "h1", "h2", "h3", "h4
             else:
                 html_content.append(element.get_text())
             element.decompose()
-    return "\n".join(html_content)
+    return "\n".join(html_content).strip(" \n")
 
 
 def _recursively_remove_attrs(tag: _OneElement, attrs: list[str]) -> _OneElement:

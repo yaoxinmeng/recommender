@@ -24,7 +24,7 @@ Search queries:
 
 
 PRELIMINARY_INFORMATION_PROMPT = """
-Extract only information relevant to "{name}" from this document:
+Extract ONLY information relevant to "{name}" from this document:
 
 {text}
 
@@ -64,12 +64,6 @@ Example 6: The heartbeat of Singapore, this bustling river is where everything s
 Caption and Hashtags:
 ```json
 """.strip(" \n")
-
-
-IMAGE_HASHTAGS_PROMPT = """
-
-""".strip(" \n")
-
 
 ################################################
 # SYSTEM PROMPTS

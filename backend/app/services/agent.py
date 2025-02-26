@@ -27,10 +27,11 @@ def extract_locations(query: str, n_results: int, n_iterations: int) -> list[Loc
     main_urls = search_duckduckgo(sg_query)
     locations: list[str] = []
     logger.info(f"Searching for information in these pages: {main_urls}")
-    used_urls = []
     for result in main_urls:
-        used_urls.append(result)
         content = scrape(result)
+        if not content:
+            logger.warning(f"Failed to retrieve any content from {result}")
+            continue
         candidate_locations = get_candidate_locations(content, sg_query)
         locations.extend([l for l in candidate_locations if l])
 
@@ -45,6 +46,7 @@ def extract_locations(query: str, n_results: int, n_iterations: int) -> list[Loc
     logger.info(f"Search for more information regarding: {locations}")
     results: list[LocationData] = []
     for i, location in enumerate(preliminary_locations):
+        visited_urls = []
         citations = []
         for iter_count in range(n_iterations):  # iterate up to n times to refine the information of each candidate location
             search_queries = get_search_queries(location.name + " Singapore", preliminary_locations[i])
@@ -54,15 +56,23 @@ def extract_locations(query: str, n_results: int, n_iterations: int) -> list[Loc
 
             # extract data from first search query
             query = search_queries[0]
-            urls = search_duckduckgo(query)
+            urls = search_duckduckgo(query, max_results=5)
             logger.trace(f"URLs: {urls}")
-            urls = [s for s in urls if s not in citations]  # check if URL has been visited already
+            urls = [s for s in urls if s not in visited_urls]  # check if URL has been visited already
             if not urls:
                 continue
-
-            url = urls[0]  # limit search to top unvisited URL each time
-            logger.info(f"Attempting to retrieve relevant information from {url}")
-            content = scrape(url)
+            
+            # limit search to top scrapable and unvisited URL
+            content = ""
+            for url in urls:
+                logger.info(f"Attempting to retrieve relevant information from {url}")
+                content = scrape(url)
+                visited_urls.append(url)
+                if content:
+                    break
+            if not content:
+                logger.warning(f"No content could be scraped from these urls: {urls}")
+                continue
 
             # attempt to extract information and parse into PreliminaryLocationData object
             location_data = get_preliminary_location(content, location.name)
@@ -83,7 +93,7 @@ def extract_locations(query: str, n_results: int, n_iterations: int) -> list[Loc
                 preliminary_locations[i] = combined_data
                 citations.append(url)
 
-        transformed_data = preliminary_to_final_location_data(preliminary_locations[i], citations + used_urls)
+        transformed_data = preliminary_to_final_location_data(preliminary_locations[i], citations)
         logger.trace(transformed_data.model_dump())
         results.append(transformed_data)
 

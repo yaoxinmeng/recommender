@@ -48,9 +48,12 @@ class LLM(BedrockLLM):
                 output = super().invoke(*args, **kwargs)
                 logger.trace(f"Generated output:\n{output}")
                 return output
-            except Exception as e:  
+            except self.client.exceptions.ThrottlingException as e:  
                 logger.warning(f"Failed to generate output: {e}")
                 time.sleep(RETRY_DELAY * (i + 1))
+            except Exception as e:
+                logger.error(f"Fatal error: {e}") 
+                return ""
 
         logger.error(f"Failed to generate output after {RETRY_LIMIT} retries")
         return ""
