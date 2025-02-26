@@ -32,9 +32,12 @@ def _playwright_scrape(url: str) -> str:
         page = context.new_page()
         try:
             page.goto(url, wait_until='networkidle', timeout=3000)  # we wait at most 3 seconds for a page to render
-            content = page.content()
         except Exception as e:
             logger.error(f"Error loading page: {e}") 
+        try:    # attempts to retrieve page contents regardless
+            content = page.content()
+        except Exception as e:
+            logger.error(f"Error retrieving page content: {e}") 
             content = ""
         browser.close()
     return content
