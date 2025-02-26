@@ -161,14 +161,16 @@ def parse_image_details(input: str) -> tuple[str, list[str]]:
     except:
         caption = ""
     hashtags = details.get("hashtags", [])
+    parsed_hashtags = []
     try:
         assert type(hashtags) == list
         for h in hashtags:
-            assert type(h) == str
+            if type(h) == str:
+                parsed_hashtags.append(h)
     except:
-        hashtags = []
+        parsed_hashtags = []
     
-    return caption, hashtags
+    return caption, parsed_hashtags
 
 
 def _parse_json_in_backticks(string: str) -> Any | None:
