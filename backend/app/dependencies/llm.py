@@ -2,17 +2,10 @@ import time
 
 from loguru import logger
 from langchain_aws import BedrockLLM
-from langchain_core.callbacks import AsyncCallbackHandler
+from langchain_core.messages import SystemMessage, HumanMessage
 
+from app.dependencies.guardrail import apply_guardrail, GuardrailException
 from app.core.config import settings
-
-class BedrockAsyncCallbackHandler(AsyncCallbackHandler):
-    # Async callback handler that can be used to handle callbacks from langchain.
-    async def on_llm_error(self, error: BaseException, **kwargs) -> None:
-        reason = kwargs.get("reason")
-        if reason == "GUARDRAIL_INTERVENED":
-            logger.warning(f"Guardrails: {kwargs}")
-
 
 RETRY_LIMIT = 10
 RETRY_DELAY = 2
@@ -30,28 +23,30 @@ class LLM(BedrockLLM):
                 "temperature": 0.2
             }
         }
-        if settings.BEDROCK_USE_GUARDRAIL:
-            super().__init__(
-                guardrails={"id": settings.BEDROCK_GUARDRAIL_ID, "version": settings.BEDROCK_GUARDRAIL_VERSION, "trace": True},
-                callbacks=[BedrockAsyncCallbackHandler()],
-                **kwargs
-            )
-        else:
-            super().__init__(**kwargs)
+        super().__init__(**kwargs)
 
-    def invoke(self, *args, **kwargs) -> str:
+
+    def invoke(self, message: HumanMessage, system_message: SystemMessage | None = None) -> str:
         """
         Custom invoke method to generate debug logs based on environment settings.
         """
+        if settings.BEDROCK_USE_GUARDRAIL:
+            apply_guardrail(message.content)
+        messages = [message]
+        if system_message:
+            messages = [system_message, message]
         for i in range(RETRY_LIMIT):
             try:
-                output = super().invoke(*args, **kwargs)
+                output = super().invoke(messages)
                 logger.trace(f"Generated output:\n{output}")
+                apply_guardrail(output, False)
                 return output
             except self.client.exceptions.ThrottlingException as e:  
                 logger.warning(f"Failed to generate output: {e}")
                 time.sleep(RETRY_DELAY * (i + 1))
-            except Exception as e:
+            except GuardrailException as e:     # if guardrail intervened, we bubble up the error
+                raise e
+            except BaseException as e:
                 logger.error(f"Fatal error: {e}") 
                 return ""
 

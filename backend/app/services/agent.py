@@ -3,12 +3,12 @@ import json
 from loguru import logger
 
 from app.types.schema import LocationData
-from app.types.model_outputs import PreliminaryLocationData
 from app.services.tools.search import search_duckduckgo
 from app.services.tools.scraper import scrape
 from app.services.tools.structured_output import get_preliminary_location, get_candidate_locations, get_search_queries, update_location_data
 from app.services.tools.image_processing import generate_caption_hashtags
 from app.services.utils import initialise_preliminary_locations, preliminary_to_final_location_data
+from app.dependencies.guardrail import apply_guardrail
 
 def extract_locations(query: str, n_results: int, n_iterations: int) -> list[LocationData]:
     """
@@ -21,6 +21,9 @@ def extract_locations(query: str, n_results: int, n_iterations: int) -> list[Loc
     number of iterations will yield more accurate results, at the cost of computation time.
     :return list[LocationData]: The list of location information 
     """
+    # validate that input is sanitary
+    apply_guardrail(query)
+    
     # craft a list of candidate locations
     logger.info(f"Searching for pages relevant to '{query}'")
     sg_query = query + " Singapore"

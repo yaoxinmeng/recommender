@@ -11,7 +11,7 @@ services:
       - BEDROCK_LLM_ID=mistral.mistral-7b-instruct-v0:2
       - BEDROCK_MULTIMODAL_ID=amazon.nova-lite-v1:0
       - BEDROCK_USE_GUARDRAIL=false
-      - BEDROCK_GUARDRAIL_ID
-      - BEDROCK_GUARDRAIL_VERSION
+      - BEDROCK_GUARDRAIL_ID=0uvxpp7rh865
+      - BEDROCK_GUARDRAIL_VERSION=1
     ports:
       - "8000:8000"
