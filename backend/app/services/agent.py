@@ -64,16 +64,24 @@ def extract_locations(query: str, n_results: int, n_iterations: int) -> list[Loc
             logger.info(f"Attempting to retrieve relevant information from {url}")
             content = scrape(url)
 
-            # attempt to parse into PreliminaryLocationData and update location
+            # attempt to extract information and parse into PreliminaryLocationData object
             location_data = get_preliminary_location(content, location.name)
             logger.trace(location_data.model_dump() if location_data else "No location data extracted")
-            if iter_count == 0:     # save 1 LLM call if it's the first iteration
+            if not location_data:
+                continue
+
+            # Update previous location data with newly extracted information
+            # save 1 LLM call if it's the first iteration
+            if iter_count == 0:     
                 preliminary_locations[i] = location_data
                 citations.append(url)
-            else:
-                updated, preliminary_locations[i] = update_location_data(preliminary_locations[i], location_data)
-                if updated:
-                    citations.append(url)
+                continue
+            previous_json = preliminary_locations[i].model_dump_json()
+            combined_data = update_location_data(preliminary_locations[i], location_data)
+            changes = previous_json != combined_data.model_dump_json()
+            if changes:
+                preliminary_locations[i] = combined_data
+                citations.append(url)
 
         transformed_data = preliminary_to_final_location_data(preliminary_locations[i], citations + used_urls)
         logger.trace(transformed_data.model_dump())
@@ -88,20 +96,3 @@ def extract_locations(query: str, n_results: int, n_iterations: int) -> list[Loc
             results[i].images[name].hashtags = hashtags
 
     return results
-
-
-def update_location_data(old_data: PreliminaryLocationData, new_data: PreliminaryLocationData | None) -> tuple[bool, PreliminaryLocationData]:
-    """
-    Update the old data with newly extracted data. We use the LLM to determine which fields should be kept and which fields should be discarded. 
-
-    :param PreliminaryLocationData old_data: The location data from previous iterations
-    :param PreliminaryLocationData | None new_data: The location data from this iteration
-    :return tuple[bool, PreliminaryLocationData]: A tuple containing a flag of whether any updates were made, and the updated model.
-    """
-    if not new_data:
-        return False, old_data
-    
-    old_dict_json = old_data.model_dump_json()
-    combined_data = update_location_data(old_data, new_data)
-    changes = old_dict_json != combined_data.model_dump_json()
-    return changes, combined_data

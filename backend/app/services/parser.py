@@ -162,7 +162,9 @@ def parse_image_details(input: str) -> tuple[str, list[str]]:
         caption = ""
     hashtags = details.get("hashtags", [])
     try:
-        assert type(hashtags) == list[str]
+        assert type(hashtags) == list
+        for h in hashtags:
+            assert type(h) == str
     except:
         hashtags = []
     

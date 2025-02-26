@@ -47,7 +47,7 @@ New Document:
 
 
 IMAGE_CAPTION_PROMPT = """
-Generate captions and hashtags for this image. For the caption, use the following examples to guide your tone. Keep the caption to less than 70 words. The hashtags should be generated with reference to the caption.
+Generate captions and hashtags for this image. For the caption, use the following examples to guide your tone. Keep the caption to less than 70 words. The hashtags generated would be used when sharing the image.
 
 Example 1: An iconic staple of local cuisine, this dish is made with mud crab drenched in chilli sauce, with fried bread buns on the side to sop the leftovers.
 
@@ -63,6 +63,11 @@ Example 6: The heartbeat of Singapore, this bustling river is where everything s
 
 Caption and Hashtags:
 ```json
+""".strip(" \n")
+
+
+IMAGE_HASHTAGS_PROMPT = """
+
 """.strip(" \n")
 
 
