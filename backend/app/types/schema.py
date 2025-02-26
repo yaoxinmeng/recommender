@@ -2,22 +2,37 @@ from pydantic import BaseModel, Field
 
 class OpeningHours(BaseModel):
     """
-    The opening hours of each day is formatted as `<start>-<end>`, 
+    The opening hours of each day formatted as `<start>-<end>`, 
     where the start and end time is formatted as HHMM (e.g. `1030-2100`).
+
+    :param str monday: Opening hours on Monday
+    :param str tuesday: Opening hours on Tuesday
+    :param str wednesday: Opening hours on Wednesday
+    :param str thursday: Opening hours on Thursday
+    :param str friday: Opening hours on Friday
+    :param str saturday: Opening hours on Saturday
+    :param str sunday: Opening hours on Sunday
     """
-    monday: str = Field(description="Opening hours on Monday")
-    tuesday: str = Field(description="Opening hours on Tuesday")
-    wednesday: str = Field(description="Opening hours on Wednesday")
-    thursday: str = Field(description="Opening hours on Thursday")
-    friday: str = Field(description="Opening hours on Friday")
-    saturday: str = Field(description="Opening hours on Saturday")
-    sunday: str = Field(description="Opening hours on Sunday")
+    monday: str
+    tuesday: str
+    wednesday: str
+    thursday: str
+    friday: str
+    saturday: str
+    sunday: str
 
 
 class ImageData(BaseModel):
-    caption: str = Field(description="Caption of the image")
-    url: str = Field(description="URL of the image")
-    hashtags: list[str] = Field(description="List of hashtags to be used when sharing the image")
+    """
+    The relevant information of each image.
+
+    :param str caption: The caption of the image in less than 70 words
+    :param str url: The URL of the image
+    :param list[str] hashtags: A list of hashtags to be used when sharing the image
+    """
+    caption: str
+    url: str
+    hashtags: list[str]
 
 
 class LocationData(BaseModel):

@@ -7,7 +7,10 @@ from app.types.model_outputs import PreliminaryLocationData
 
 def parse_string_list(input: str) -> list[str]:
     """
-    Parse the input string as a list of string.
+    Parse the input string as a list of strings.
+
+    :param str input: The raw input string
+    :return: The extracted list of strings
     """
     queries = _parse_json_in_backticks(input)
     # if unable to retrieve items in backticks

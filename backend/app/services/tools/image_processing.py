@@ -10,22 +10,24 @@ from app.dependencies.multimodal_llm import multimodal_llm
 from app.services.prompts import IMAGE_CAPTION_PROMPT, STRUCTURED_RESPONSE_SYSTEM_PROMPT
 from app.services.parser import parse_image_details
 from app.types.model_json_schema import IMAGE_DETAILS_JSON_SCHEMA
-from app.types.schema import ImageData
 
-def generate_caption_hashtags(image_data: ImageData) -> tuple[str, list[str]]:
+def generate_caption_hashtags(image_url: str) -> tuple[str, list[str]]:
     """
-    Use LLM to caption the provided image based on guided tones.
+    Use a multimodal LLM to generate caption and hashtags for the provided image.
+
+    :param str image_url: The url of the image
+    :return tuple[str, list[str]]: A tuple containing the caption and hashtags
     """
     # retrieve image
-    r = requests.get(image_data.url)
+    r = requests.get(image_url)
     try:
         r.raise_for_status()
     except:
-        logger.error(f"Unable to retrieve image data from url {image_data.url}")
+        logger.error(f"Unable to retrieve image data from url {image_url}")
         return "", []
 
     # convert to PNG and encode as base64
-    image_base64 = _generate_base64_from_url(image_data.url)
+    image_base64 = _generate_base64_from_url(image_url)
     if not image_base64:
         return "", []
 

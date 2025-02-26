@@ -17,6 +17,9 @@ from app.services.parser import parse_preliminary_location, parse_string_list
 
 
 def get_preliminary_location(text: str, location_name: str) -> PreliminaryLocationData | None:
+    """
+    
+    """
     messages = [
         SystemMessage(STRUCTURED_OUTPUT_SYSTEM_PROMPT.format(
             json_schema=PRELIMINARY_LOCATION_JSON_SCHEMA

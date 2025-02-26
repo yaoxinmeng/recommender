@@ -1,3 +1,5 @@
+# This file contains all the structured JSON formats based on the Pydantic models defined in `model_outputs.py`. 
+
 PRELIMINARY_LOCATION_JSON_SCHEMA = """
 {
     "name": "<name of location>",

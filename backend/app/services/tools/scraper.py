@@ -5,11 +5,10 @@ from playwright.sync_api import sync_playwright
 
 def scrape(url: str) -> str:
     """
-    Call to scrape the contents of a web page. Retrieves only elements that match the provided tags.
+    Call to scrape the contents of a web page. Retrieves only textual elements and images.
 
     :param str url: The URL of the web page to scrape.
-    :param list[str] tags: The list of relevant tags to retrieve.
-    :return: The content of the web page.
+    :return str: The content of the web page rendered in Markdown.
     """
     # scrape using Playwright
     content = _playwright_scrape(url)
@@ -24,6 +23,9 @@ def scrape(url: str) -> str:
 
 
 def _playwright_scrape(url: str) -> str:
+    """
+    Scrape the contents of a page using the Playwright Sync API.
+    """
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True)
         context = browser.new_context(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
