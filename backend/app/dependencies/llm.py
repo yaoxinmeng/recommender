@@ -43,7 +43,8 @@ class LLM(BedrockLLM):
             try:
                 output = super().invoke(messages)
                 logger.trace(f"Generated output:\n{output}")
-                apply_guardrail(output, False)
+                if settings.BEDROCK_USE_GUARDRAIL:
+                    apply_guardrail(output, False)
                 return output
             except self.client.exceptions.ThrottlingException as e:  
                 logger.warning(f"Failed to generate output: {e}")
