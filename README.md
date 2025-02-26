@@ -2,7 +2,7 @@
 Auto-generate recommendations based on venue requirements
 
 ## Quickstart
-The backend API requires the appropriate AWS credentials to function. Set `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SESSION_TOKEN` (needed if your account has MFA enabled) in "docker-compose.yml". Run the following command to spin up the container:
+The backend API requires the appropriate AWS credentials to function. Set `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SESSION_TOKEN` (needed if your account has MFA enabled) as environment variables. Run the following command to spin up the container:
 ```sh
 docker compose up -d
 ``` 
@@ -55,16 +55,17 @@ graph TD;
 ```
 
 ### 3. Captioning each image found
-In this step, we simply perform image captioning using an image-to-text LLM (Amazon Nova) for each image extracted above. Below, we outline the steps taken for a single image:
+In this step, we genrate caption and hashtags using a multimodal LLM (Amazon Nova) for each image extracted above. Below, we outline the steps taken for a single image:
 
 ```mermaid
 graph TD;
   S((Start))-->A(Download image)
   A-->B(Encode image as base 64)
-  B-->C(Generate caption of image)
-  C-->D((Finish))
+  B-->C(Generate caption and hashtags of image)
+  C-->E((Finish))
 
-  style C stroke:#0f0
+  classDef llm stroke:#0f0;
+  class C llm;
 ```
 
 ## Challenges
