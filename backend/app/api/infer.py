@@ -14,7 +14,7 @@ def search_venues(body: SearchPayload) -> list[LocationData]:
     try:
         locations = extract_locations(body.query, body.num_results, body.num_iterations)
         return locations
-    # the only uncaight exception that should bubble up here is the guardrails intervention
+    # the only uncaught exception that should bubble up here is the guardrails intervention
     except BaseException as e:
         logger.error(traceback.format_exc())
         raise HTTPException(400, repr(e))

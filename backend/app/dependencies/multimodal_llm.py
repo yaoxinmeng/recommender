@@ -22,7 +22,11 @@ class MultimodalLLM:
 
     def invoke(self, message: HumanMessage, system_message: str = "", **kwargs) -> str:
         """
-        Custom invoke method to generate debug logs based on environment settings.
+        Invoke the Multimodal LLM to generate text. 
+
+        :param HumanMessage message: The user message
+        :param str system_message: An optional system message
+        :return str: The generated text from the LLM
         """
         request_body = {
             "schemaVersion": "messages-v1",

@@ -28,7 +28,11 @@ class LLM(BedrockLLM):
 
     def invoke(self, message: HumanMessage, system_message: SystemMessage | None = None) -> str:
         """
-        Custom invoke method to generate debug logs based on environment settings.
+        Custom method wrapped around LangChain's `invoke` method for customisable behaviour.
+
+        :param HumanMessage message: The user message
+        :param SystemMessage system_message: An optional system message
+        :return str: The generated text from the LLM
         """
         if settings.BEDROCK_USE_GUARDRAIL:
             apply_guardrail(message.content)
