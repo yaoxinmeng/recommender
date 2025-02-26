@@ -4,6 +4,7 @@ Auto-generate recommendations based on venue requirements
 ## Quickstart
 The backend API requires the appropriate AWS credentials to function. Set `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SESSION_TOKEN` (needed if your account has MFA enabled) as environment variables. 
 Optionally, guardrails can be enabled by setting `BEDROCK_USE_GUARDRAIL` to be true in the Docker compose file. Note that if guardrails are enabled, then both `BEDROCK_GUARDRAIL_ID` and `BEDROCK_GUARDRAIL_VERSION` must be configured as well. 
+The `ENV` variable controls the log verbosity of the service, and can be either `debug`, `dev` or `prod`.
 
 Run the following command to spin up the container:
 ```sh
