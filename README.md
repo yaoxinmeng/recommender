@@ -10,7 +10,7 @@ docker compose up -d
 The API endpoint is hosted on port `8000` by default, but this can be modified in "docker-compose.yml".
 
 ## Endpoints
-The SwaggerUI for the API is hosted at http://localhost:8000/docs by default. 
+The SwaggerUI for the API is hosted at http://localhost:8000/docs by default. The detailed documentation can be found in this [Postman collection](https://interstellar-meteor-840800.postman.co/workspace/New-Team-Workspace~61341a57-ebf4-45e2-9aa9-90c288cdd25b/collection/24411008-63434cf4-c082-4434-a1a8-ddb505f735db?action=share&creator=24411008).
 
 ## API internal flow
 The internal flow of the API can be broken down into 3 main stages:
